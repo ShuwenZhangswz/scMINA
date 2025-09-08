@@ -191,3 +191,7 @@ Desktop.ini
 # *.json
 # *.pickle
 # *.pkl
+
+/data
+/results
+/logs

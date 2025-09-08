@@ -14,6 +14,7 @@ dependencies:
   # R packages for single-cell analysis
   - r-seurat=5.1.0
   - r-seuratobject=5.0.2
+  - r-signac=	1.15.0
 
   # Python scientific stack
   - numpy>=1.21.0,<2.0.0
@@ -34,8 +35,10 @@ dependencies:
   # Nextflow/runtime utilities
   - openjdk=11
   - graphviz
+  - nextflow
 
   # Pip packages (for packages not available in conda)
   - pip:
     - scvi-tools>=1.0.0
     - scpair>=0.1.0
+    - macs2>=2.2.9.1
