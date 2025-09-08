@@ -1,0 +1,41 @@
+name: scmina
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Python and core packages
+  - python>=3.10,<3.13
+  - pip
+  
+  # R and R packages
+  - r-base=4.2.2
+  - r-essentials
+  # R packages for single-cell analysis
+  - r-seurat=5.1.0
+  - r-seuratobject=5.0.2
+
+  # Python scientific stack
+  - numpy>=1.21.0,<2.0.0
+  - pandas>=1.3.0,<3.0.0
+  - scipy>=1.7.0,<2.0.0
+  - scikit-learn>=1.0.0,<2.0.0
+  - matplotlib>=3.5.0,<4.0.0
+  - seaborn>=0.11.0,<1.0.0
+  
+  # Single-cell analysis
+  - scanpy>=1.8.0,<2.0.0
+  - anndata>=0.8.0,<1.0.0
+  
+  # Utilities
+  - tqdm>=4.60.0,<5.0.0
+  - numba>=0.56.0,<1.0.0
+ 
+  # Nextflow/runtime utilities
+  - openjdk=11
+  - graphviz
+
+  # Pip packages (for packages not available in conda)
+  - pip:
+    - scvi-tools>=1.0.0
+    - scpair>=0.1.0
