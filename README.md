@@ -19,11 +19,6 @@
    conda activate scmina
    ```
 
-4. **Switch between Python and R:**
-   ```bash
-   ./switch_lang.sh
-   ```
-
 
 ## Dependencies
 
@@ -35,13 +30,12 @@ All dependencies are managed through conda and specified in `environment.yml`:
 - scvi-tools>=1.0.0
 - numpy, pandas, scipy, scikit-learn
 - matplotlib, seaborn, scanpy, anndata
-- pytorch, jax, tqdm, numba
+- ...
 
 ### R Dependencies
 - R>=4.2.2
-- Seurat, dplyr, ggplot2, plotly
-- htmlwidgets, rmarkdown, knitr
-- devtools, biocmanager
+- Seurat
+- ...
 
 ### Installation
 All dependencies are automatically installed when you run:
@@ -97,7 +91,7 @@ conda activate scmina
 ```
 
 Notes:
-- The conda env pins R to 4.2.2 to match your cluster.
+- The conda env pins R to 4.2.2 to match the testing cluster.
 - If a conda solve fails due to strict R package pins, prefer installing that package via BiocManager after env creation.
 
 ### Installing Bioconductor/CRAN R packages inside the env
