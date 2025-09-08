@@ -14,7 +14,7 @@ dependencies:
   # R packages for single-cell analysis
   - r-seurat=5.1.0
   - r-seuratobject=5.0.2
-  - r-signac=	1.15.0
+  # - r-signac=1.15.0  # Install via R if needed
 
   # Python scientific stack
   - numpy>=1.21.0,<2.0.0
@@ -42,3 +42,10 @@ dependencies:
     - scvi-tools>=1.0.0
     - scpair>=0.1.0
     - macs2>=2.2.9.1
+
+# -----------------------------------------------------------------------------
+# consider enabling the libmamba solver for speed/stability:
+#   conda config --set solver libmamba
+#   conda env create -f environment.yml
+#   conda env update -f environment.yml
+# -----------------------------------------------------------------------------

@@ -5,27 +5,14 @@
  * Demonstrates Python and R integration
  */
 
-// Workflow parameters
-params {
-    input_data = "data/example.h5ad"
-    output_dir = "results"
-    python_script = "scripts/example_process_data.py"
-    r_script = "scripts/example_visualize_data.R"
-}
+// Enable DSL2
+nextflow.enable.dsl=2
 
-// Print workflow information
-workflow {
-    println """
-    ==========================================
-    scMINA Nextflow Workflow
-    ==========================================
-    Input data: ${params.input_data}
-    Output directory: ${params.output_dir}
-    Python script: ${params.python_script}
-    R script: ${params.r_script}
-    ==========================================
-    """
-}
+// Workflow parameters (DSL2 style)
+params.input_data = "/group/gquongrp/workspaces/hongruhu/sea-ad/software/scMINA/data/example_data.h5ad"
+params.output_dir = "./results"
+params.python_script = "/group/gquongrp/workspaces/hongruhu/sea-ad/software/scMINA/scripts/example_process_data.py"
+params.r_script = "/group/gquongrp/workspaces/hongruhu/sea-ad/software/scMINA/scripts/example_visualize_data.R"
 
 // Process 1: Python data processing
 process python_processing {
@@ -83,32 +70,24 @@ process generate_report {
     path "report.html", emit: report
     
     script:
-    """
-    python -c "
-import pandas as pd
-import matplotlib.pyplot as plt
-from pathlib import Path
-
-# Create simple HTML report
-html_content = f'''
-<html>
-<head><title>scMINA Analysis Report</title></head>
-<body>
-<h1>scMINA Analysis Report</h1>
-<h2>Input Data</h2>
-<p>Processed data: {processed_data}</p>
-<h2>Results</h2>
-<p>Generated plots: {len(list(Path('.').glob('*.png')))} files</p>
-<h2>Logs</h2>
-<pre>Python log:\n{open(python_log).read()}</pre>
-<pre>R log:\n{open(r_log).read()}</pre>
-</body>
-</html>
-'''
-with open('report.html', 'w') as f:
-    f.write(html_content)
-"
-    """
+    '''
+    PLOTS_COUNT=$(ls -1 *.png 2>/dev/null | wc -l)
+    cat > report.html << EOF
+    <html>
+    <head><title>scMINA Analysis Report</title></head>
+    <body>
+    <h1>scMINA Analysis Report</h1>
+    <h2>Input Data</h2>
+    <p>Processed data: !{processed_data}</p>
+    <h2>Results</h2>
+    <p>Generated plots: ${PLOTS_COUNT} files</p>
+    <h2>Logs</h2>
+    <p>Python log: <a href="!{python_log}">$(basename !{python_log})</a></p>
+    <p>R log: <a href="!{r_log}">$(basename !{r_log})</a></p>
+    </body>
+    </html>
+    EOF
+    '''
 }
 
 // Main workflow

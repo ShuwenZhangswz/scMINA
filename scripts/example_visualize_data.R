@@ -74,9 +74,6 @@ seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
 cat("Performing PCA...\n", file = log_path, append = TRUE)
 seurat_obj <- RunPCA(seurat_obj, features = VariableFeatures(object = seurat_obj), verbose = FALSE)
 
-# UMAP
-cat("Computing UMAP...\n", file = log_path, append = TRUE)
-seurat_obj <- RunUMAP(seurat_obj, dims = 1:10, verbose = FALSE)
 
 # Clustering
 cat("Performing clustering...\n", file = log_path, append = TRUE)
@@ -89,43 +86,13 @@ dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 # Generate plots
 cat("Generating visualizations...\n", file = log_path, append = TRUE)
 
-# UMAP plot
-p1 <- DimPlot(seurat_obj, reduction = "umap", group.by = "seurat_clusters") +
-    ggtitle("UMAP Clustering") +
-    theme(plot.title = element_text(hjust = 0.5))
-
-ggsave(file.path(output_dir, "umap_clusters.png"), p1, width = 8, height = 6, dpi = 300)
-
 # PCA plot
-p2 <- DimPlot(seurat_obj, reduction = "pca", group.by = "seurat_clusters") +
+p1 <- DimPlot(seurat_obj, reduction = "pca", group.by = "seurat_clusters") +
     ggtitle("PCA Clustering") +
     theme(plot.title = element_text(hjust = 0.5))
 
-ggsave(file.path(output_dir, "pca_clusters.png"), p2, width = 8, height = 6, dpi = 300)
+ggsave(file.path(output_dir, "pca_clusters.png"), p1, width = 8, height = 6, dpi = 300)
 
-# Feature plot (top variable genes)
-top_features <- head(VariableFeatures(seurat_obj), 4)
-p3 <- FeaturePlot(seurat_obj, features = top_features, reduction = "umap")
-
-ggsave(file.path(output_dir, "feature_plot.png"), p3, width = 12, height = 8, dpi = 300)
-
-# Violin plot
-p4 <- VlnPlot(seurat_obj, features = top_features, group.by = "seurat_clusters")
-
-ggsave(file.path(output_dir, "violin_plot.png"), p4, width = 12, height = 8, dpi = 300)
-
-# Interactive plotly plot
-p5 <- plot_ly(
-    data = data.frame(seurat_obj@reductions$umap@cell.embeddings),
-    x = ~UMAP_1, y = ~UMAP_2,
-    color = seurat_obj$seurat_clusters,
-    type = 'scatter', mode = 'markers',
-    text = paste("Cell:", rownames(seurat_obj@reductions$umap@cell.embeddings)),
-    hoverinfo = 'text'
-) %>%
-    layout(title = "Interactive UMAP Plot")
-
-htmlwidgets::saveWidget(p5, file.path(output_dir, "interactive_umap.html"))
 
 cat("Visualization completed successfully!\n", file = log_path, append = TRUE)
 cat(paste("Plots saved to:", output_dir, "\n"), file = log_path, append = TRUE)
@@ -134,6 +101,5 @@ cat(paste("Plots saved to:", output_dir, "\n"), file = log_path, append = TRUE)
 cat("\n=== Analysis Summary ===\n")
 cat(paste("Number of cells:", ncol(seurat_obj), "\n"))
 cat(paste("Number of genes:", nrow(seurat_obj), "\n"))
-cat(paste("Number of clusters:", length(unique(seurat_obj$seurat_clusters)), "\n"))
 cat(paste("Variable features:", length(VariableFeatures(seurat_obj)), "\n"))
 cat("=======================\n")

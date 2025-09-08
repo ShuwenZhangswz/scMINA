@@ -62,9 +62,7 @@ scMINA is designed to work seamlessly with Nextflow workflows, supporting both P
 
 2. **Run the example workflow:**
    ```bash
-   nextflow run workflows/example_workflow.nf \
-       --input data/sample.h5ad \
-       --output_dir results
+   nextflow run workflows/example_workflow.nf -profile local_activated
    ```
 
 3. **Customize the workflow:**
