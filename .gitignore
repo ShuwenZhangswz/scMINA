@@ -195,4 +195,5 @@ Desktop.ini
 /data
 /results
 /logs
+/workflows/work/
 .nextflow/

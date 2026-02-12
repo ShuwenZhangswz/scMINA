@@ -42,6 +42,7 @@ dependencies:
     - scvi-tools>=1.0.0
     - scpair>=0.1.0
     - macs2>=2.2.9.1
+    - captum>=0.6.0
 
 # -----------------------------------------------------------------------------
 # consider enabling the libmamba solver for speed/stability:
