@@ -95,11 +95,16 @@ nextflow run workflows/feature_attribution.nf \
 
 See `../scpair_nextflow_pipeline_plan.md` for full documentation.
 
+### System Requirements (scPair pipeline):
+
+- **GPU:** `scpair_train`, `scpair_inference`, and `feature_attribution` require at least 1 GPU (PyTorch/CUDA). `scpair_cluster` is CPU-only. For SLURM, `nextflow.config` requests `--gres=gpu:1` for GPU processes.
+- **Local runs:** Use `-profile local_activated`; ensure CUDA is available if running scPair steps locally.
+
 ### Workflow Features:
 
 - **Unified Environment**: Both Python and R in the same conda environment
 - **Cluster Support**: Configured for SLURM, PBS, SGE, and local execution
-- **Resource Management**: Automatic CPU/memory allocation
+- **Resource Management**: Automatic CPU/memory allocation (GPU for scPair train/inference/attribution)
 - **Error Handling**: Retry logic and error reporting
 - **Resume Capability**: Continue failed workflows from where they stopped
 
