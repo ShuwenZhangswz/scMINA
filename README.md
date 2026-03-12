@@ -69,11 +69,42 @@ scMINA is designed to work seamlessly with Nextflow workflows, supporting both P
 - `environment.yml` - Main conda environment with Python + R
 - `nextflow.config` - Nextflow configuration
 
+### scPair Feature Attribution Pipeline
+
+Modular pipeline for scPair training, clustering, and cluster-specific feature attribution:
+
+```bash
+# Full scPair pipeline: train -> embeddings -> clustering
+nextflow run workflows/scpair_pipeline.nf --input_h5ad /path/to/paired.h5ad
+
+# Or with separate inputs (rna + atac + meta + splits):
+nextflow run workflows/scpair_pipeline.nf --input_mode separate \
+  --input_rna /path/to/rna.h5ad --input_atac /path/to/atac.h5ad \
+  --input_meta /path/to/meta.csv --input_index_dir /path/to/splits/
+
+# Clustering only (using existing embeddings from a prior run):
+nextflow run workflows/scpair_pipeline.nf --run clustering_only --embeddings_dir /path/to/embeddings/
+
+# Feature attribution (after choosing resolution):
+nextflow run workflows/feature_attribution.nf \
+  --adata /path/to/adata.h5ad \
+  --checkpoint_dir /path/to/checkpoints/ \
+  --cluster_labels /path/to/cluster_labels_res0.9.csv \
+  --attribution_method both --baseline both --output_ranked --top_n_genes 50
+```
+
+See `../scpair_nextflow_pipeline_plan.md` for full documentation.
+
+### System Requirements (scPair pipeline):
+
+- **GPU:** `scpair_train`, `scpair_inference`, and `feature_attribution` require at least 1 GPU (PyTorch/CUDA). `scpair_cluster` is CPU-only. For SLURM, `nextflow.config` requests `--gres=gpu:1` for GPU processes.
+- **Local runs:** Use `-profile local_activated`; ensure CUDA is available if running scPair steps locally.
+
 ### Workflow Features:
 
 - **Unified Environment**: Both Python and R in the same conda environment
 - **Cluster Support**: Configured for SLURM, PBS, SGE, and local execution
-- **Resource Management**: Automatic CPU/memory allocation
+- **Resource Management**: Automatic CPU/memory allocation (GPU for scPair train/inference/attribution)
 - **Error Handling**: Retry logic and error reporting
 - **Resume Capability**: Continue failed workflows from where they stopped
 
