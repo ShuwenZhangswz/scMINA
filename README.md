@@ -69,9 +69,32 @@ scMINA is designed to work seamlessly with Nextflow workflows, supporting both P
 - `environment.yml` - Main conda environment with Python + R
 - `nextflow.config` - Nextflow configuration
 
-### scPair Feature Attribution Pipeline
+### Multimodal integration and downstream analysis workflows using scPair and FigR
 
-Modular pipeline for scPair training, clustering, and cluster-specific feature attribution:
+![Overview of data processing, multimodal integration, and downstream analysis workflows](../workflow_fig.png)
+
+The following high-level diagram summarizes how the main workflows connect:
+
+```text
+scpair_train.nf  -->  scpair_cluster.nf
+      |                    |
+      v                    v
+  scPair embeddings   cluster labels
+          |
+          v
+integrate_scpair_multiome.nf
+          |
+          v
+  Seurat object with scPair embeddings
+          |
+          v
+      figr_pipeline.nf
+          |
+          v
+   FigR GRN results and plots
+```
+
+The scPair workflow supports training, clustering, and feature attribution:
 
 ```bash
 # Full scPair pipeline: train -> embeddings -> clustering
@@ -94,6 +117,38 @@ nextflow run workflows/feature_attribution.nf \
 ```
 
 See `../scpair_nextflow_pipeline_plan.md` for full documentation.
+
+
+Workflows wrap the R helper scripts in `scripts/` to connect pre-trained scPair embeddings to Seurat and FigR:
+
+- `workflows/integrate_scpair_multiome.nf`
+  - Integrates scPair embeddings (trained in Python) into a multiome Seurat object, performs clustering/UMAP/marker analysis, and writes updated Seurat objects and plots.
+  - Example:
+    ```bash
+    nextflow run workflows/integrate_scpair_multiome.nf \
+      --seurat_obj_path /path/to/multiome_seurat.rds \
+      --scpair_csv /path/to/scpair_embeddings.csv \
+      --metadata_csv /path/to/metadata.csv \
+      --resolution 0.9 \
+      --prefix Sample1
+    ```
+
+- `workflows/figr_pipeline.nf`
+  - Runs FigR preprocessing and GRN analysis in one pipeline, using the Seurat object with scPair embeddings:
+    1. `scripts/prep_FigR_inputs.R` creates `ATAC.se`, `RNAmat`, and `cellkNN` RDS files.
+    2. `scripts/run_FigR_analysis.R` runs peak–gene correlation, DORC discovery, and GRN inference.
+  - Example:
+    ```bash
+    nextflow run workflows/figr_pipeline.nf \
+      --atac_mtx /path/to/ATACmat.mtx \
+      --rna_mtx /path/to/RNAmat.mtx \
+      --metadata_csv /path/to/metadata.csv \
+      --genes_csv /path/to/genes.csv \
+      --peaks_csv /path/to/peaks.csv \
+      --seurat_scpair_rds /path/to/Sample1_scPair_final_res0.9.rds \
+      --prefix Sample1 \
+      --genome hg38
+    ```
 
 ### System Requirements (scPair pipeline):
 

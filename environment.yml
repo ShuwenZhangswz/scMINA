@@ -14,6 +14,16 @@ dependencies:
   # R packages for single-cell analysis
   - r-seurat=5.1.0
   - r-seuratobject=5.0.2
+  - r-dplyr
+  - r-ggplot2
+  - r-matrix
+  - r-fnn
+  - bioconductor-chromvar
+  - bioconductor-summarizedexperiment
+  - bioconductor-genomicranges
+  - bioconductor-figr
+  - r-ggrastr
+  - r-buencolors
   # - r-signac=1.15.0  # Install via R if needed
 
   # Python scientific stack

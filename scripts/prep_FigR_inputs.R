@@ -161,3 +161,45 @@ prep_FigR_inputs <- function(
     cell_kNN = cellkNN
   ))
 }
+
+if (sys.nframe() == 0) {
+  # CLI wrapper for Rscript usage with --key value args
+  args <- commandArgs(trailingOnly = TRUE)
+  arg_list <- list()
+  if (length(args) > 0) {
+    i <- 1
+    while (i <= length(args)) {
+      key <- args[[i]]
+      if (startsWith(key, "--")) {
+        name <- substring(key, 3)
+        value <- if (i + 1 <= length(args) && !startsWith(args[[i + 1]], "--")) args[[i + 1]] else TRUE
+        arg_list[[name]] <- value
+        i <- i + if (isTRUE(value) && (i + 1 > length(args) || startsWith(args[[i + 1]], "--"))) 1 else 2
+      } else {
+        i <- i + 1
+      }
+    }
+  }
+
+  required <- c("atac_mtx", "rna_mtx", "metadata_csv", "genes_csv", "peaks_csv", "seurat_scpair_rds")
+  missing <- setdiff(required, names(arg_list))
+  if (length(missing) > 0) {
+    stop("Missing required arguments: ", paste(missing, collapse = ", "))
+  }
+
+  k      <- if (!is.null(arg_list$k)) as.integer(arg_list$k) else 30
+  prefix <- if (!is.null(arg_list$prefix)) arg_list$prefix else "FigR"
+  outdir <- if (!is.null(arg_list$outdir)) arg_list$outdir else "./FigR_preprocessing"
+
+  prep_FigR_inputs(
+    atac_mtx          = arg_list$atac_mtx,
+    rna_mtx           = arg_list$rna_mtx,
+    metadata_csv      = arg_list$metadata_csv,
+    genes_csv         = arg_list$genes_csv,
+    peaks_csv         = arg_list$peaks_csv,
+    seurat_scpair_rds = arg_list$seurat_scpair_rds,
+    k                 = k,
+    prefix            = prefix,
+    outdir            = outdir
+  )
+}

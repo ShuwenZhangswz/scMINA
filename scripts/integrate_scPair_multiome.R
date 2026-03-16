@@ -212,3 +212,67 @@ integrate_scPair_multiome <- function(
 
   return(obj)
 }
+
+if (sys.nframe() == 0) {
+  # Simple CLI wrapper so this script can be called via Rscript with --key value args
+  args <- commandArgs(trailingOnly = TRUE)
+  arg_list <- list()
+  if (length(args) > 0) {
+    i <- 1
+    while (i <= length(args)) {
+      key <- args[[i]]
+      if (startsWith(key, "--")) {
+        name <- substring(key, 3)
+        value <- if (i + 1 <= length(args) && !startsWith(args[[i + 1]], "--")) args[[i + 1]] else TRUE
+        arg_list[[name]] <- value
+        i <- i + if (isTRUE(value) && (i + 1 > length(args) || startsWith(args[[i + 1]], "--"))) 1 else 2
+      } else {
+        i <- i + 1
+      }
+    }
+  }
+
+  required <- c("seurat_obj_path", "scpair_csv", "metadata_csv")
+  missing <- setdiff(required, names(arg_list))
+  if (length(missing) > 0) {
+    stop("Missing required arguments: ", paste(missing, collapse = ", "))
+  }
+
+  dims_use <- if (!is.null(arg_list$dims_use)) {
+    # Expect something like "1:60" or "1-60"
+    val <- as.character(arg_list$dims_use)
+    if (grepl(":", val)) {
+      rng <- strsplit(val, ":", fixed = TRUE)[[1]]
+      seq(as.integer(rng[1]), as.integer(rng[2]))
+    } else if (grepl("-", val)) {
+      rng <- strsplit(val, "-", fixed = TRUE)[[1]]
+      seq(as.integer(rng[1]), as.integer(rng[2]))
+    } else {
+      as.integer(strsplit(val, ",")[[1]])
+    }
+  } else {
+    1:60
+  }
+
+  resolution <- if (!is.null(arg_list$resolution)) as.numeric(arg_list$resolution) else 0.9
+  prefix     <- if (!is.null(arg_list$prefix)) arg_list$prefix else "Sample"
+  outdir     <- if (!is.null(arg_list$outdir)) arg_list$outdir else "./scpair_results"
+  split_by   <- if (!is.null(arg_list$split_by) && arg_list$split_by != "NULL") arg_list$split_by else NULL
+
+  generate_plots <- TRUE
+  if (!is.null(arg_list$no_plots)) {
+    generate_plots <- FALSE
+  }
+
+  integrate_scPair_multiome(
+    seurat_obj_path = arg_list$seurat_obj_path,
+    scpair_csv      = arg_list$scpair_csv,
+    metadata_csv    = arg_list$metadata_csv,
+    dims_use        = dims_use,
+    resolution      = resolution,
+    prefix          = prefix,
+    outdir          = outdir,
+    split_by        = split_by,
+    generate_plots  = generate_plots
+  )
+}

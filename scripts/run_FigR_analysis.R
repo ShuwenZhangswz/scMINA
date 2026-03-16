@@ -180,3 +180,54 @@ run_FigR_analysis <- function(
     figR_GRN = figR.d
   ))
 }
+
+if (sys.nframe() == 0) {
+  # CLI wrapper for Rscript usage with --key value args
+  args <- commandArgs(trailingOnly = TRUE)
+  arg_list <- list()
+  if (length(args) > 0) {
+    i <- 1
+    while (i <= length(args)) {
+      key <- args[[i]]
+      if (startsWith(key, "--")) {
+        name <- substring(key, 3)
+        value <- if (i + 1 <= length(args) && !startsWith(args[[i + 1]], "--")) args[[i + 1]] else TRUE
+        arg_list[[name]] <- value
+        i <- i + if (isTRUE(value) && (i + 1 > length(args) || startsWith(args[[i + 1]], "--"))) 1 else 2
+      } else {
+        i <- i + 1
+      }
+    }
+  }
+
+  required <- c("atac_se_rds", "rna_mat_rds", "cellknn_rds")
+  missing <- setdiff(required, names(arg_list))
+  if (length(missing) > 0) {
+    stop("Missing required arguments: ", paste(missing, collapse = ", "))
+  }
+
+  genome        <- if (!is.null(arg_list$genome)) arg_list$genome else "hg38"
+  nCores_corr   <- if (!is.null(arg_list$nCores_corr)) as.integer(arg_list$nCores_corr) else 64
+  nCores_smooth <- if (!is.null(arg_list$nCores_smooth)) as.integer(arg_list$nCores_smooth) else 24
+  nCores_grn    <- if (!is.null(arg_list$nCores_grn)) as.integer(arg_list$nCores_grn) else 8
+  dorc_cutoff   <- if (!is.null(arg_list$dorc_cutoff)) as.numeric(arg_list$dorc_cutoff) else 5
+  dorc_labelTop <- if (!is.null(arg_list$dorc_labelTop)) as.integer(arg_list$dorc_labelTop) else 20
+  dorcK         <- if (!is.null(arg_list$dorcK)) as.numeric(arg_list$dorcK) else 2
+  prefix        <- if (!is.null(arg_list$prefix)) arg_list$prefix else "FigR"
+  outdir        <- if (!is.null(arg_list$outdir)) arg_list$outdir else "./FigR_results"
+
+  run_FigR_analysis(
+    atac_se_rds   = arg_list$atac_se_rds,
+    rna_mat_rds   = arg_list$rna_mat_rds,
+    cellknn_rds   = arg_list$cellknn_rds,
+    genome        = genome,
+    nCores_corr   = nCores_corr,
+    nCores_smooth = nCores_smooth,
+    nCores_grn    = nCores_grn,
+    dorc_cutoff   = dorc_cutoff,
+    dorc_labelTop = dorc_labelTop,
+    dorcK         = dorcK,
+    prefix        = prefix,
+    outdir        = outdir
+  )
+}
