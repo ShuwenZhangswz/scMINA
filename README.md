@@ -71,7 +71,7 @@ scMINA is designed to work seamlessly with Nextflow workflows, supporting both P
 
 ### Multimodal integration and downstream analysis workflows using scPair and FigR
 
-![Overview of data processing, multimodal integration, and downstream analysis workflows](../workflow_fig.png)
+![Overview of data processing, multimodal integration, and downstream analysis workflows](workflow_fig.png)
 
 The following high-level diagram summarizes how the main workflows connect:
 
