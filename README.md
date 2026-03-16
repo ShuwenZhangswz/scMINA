@@ -7,7 +7,7 @@ scMINA is a Nextflow-based framework for single-cell multimodal (RNA + ATAC) ana
 
 1. **Clone the repository:**
    ```bash
-   git clone git@github.com:xyfqwlzoe/scMINA.git
+   git clone git@github.com:ShuwenZhangswz/scMINA.git
    cd scMINA
    ```
 
