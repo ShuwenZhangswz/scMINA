@@ -1,5 +1,7 @@
 # scMINA
 
+scMINA is a Nextflow-based framework for single-cell multimodal (RNA + ATAC) analysis. It combines scPair deep generative modeling as an option in Python with Seurat and FigR workflows in R for gene regulatory network (GRN) inference, and explainable downstream analysis.
+
 
 ## Installation
 
@@ -22,7 +24,7 @@
 
 ## Dependencies
 
-All dependencies are managed through conda and specified in `environment.yml`:
+All dependencies are managed through conda and specified in `environment.yml`.
 
 ### Python Dependencies
 - Python>=3.10,<3.13
@@ -30,24 +32,25 @@ All dependencies are managed through conda and specified in `environment.yml`:
 - scvi-tools>=1.0.0
 - numpy, pandas, scipy, scikit-learn
 - matplotlib, seaborn, scanpy, anndata
-- ...
+- See `environment.yml` for the full and up-to-date list.
 
-### R Dependencies
+### R / Bioconductor Dependencies
 - R>=4.2.2
-- Seurat
-- ...
+- Seurat and SeuratObject
+- FigR and supporting Bioconductor packages for ATAC and GRN analysis
+- See `environment.yml` for the full list of R/Bioconductor packages.
 
-### Installation
-All dependencies are automatically installed when you run:
-```bash
-./setup.sh
-```
+### Environment files
 
-## Nextflow Integration
+- `environment.yml` – main conda environment with Python + R
+- `nextflow.config` – Nextflow configuration and resource labels
 
-scMINA is designed to work seamlessly with Nextflow workflows, supporting both Python and R processes in the same environment.
 
-### Quick Start with Nextflow:
+## Nextflow integration and overall workflow
+
+scMINA is designed to work seamlessly with Nextflow, orchestrating both Python (scPair) and R (Seurat + FigR) processes in the same environment.
+
+### Quick start with Nextflow
 
 1. **Set up the conda environment:**
    ```bash
@@ -59,19 +62,38 @@ scMINA is designed to work seamlessly with Nextflow workflows, supporting both P
    nextflow run workflows/example_workflow.nf -profile local_activated
    ```
 
-3. **Customize the workflow:**
-   - Edit `workflows/example_workflow.nf` for your specific needs
-   - Modify `nextflow.config` for cluster-specific settings
-   - Add your own Python/R scripts to `scripts/`
 
-### Environment Files:
+### Multimodal integration and downstream analysis workflows using scPair and FigR
 
-- `environment.yml` - Main conda environment with Python + R
-- `nextflow.config` - Nextflow configuration
+![Overview of data processing, multimodal integration, and downstream analysis workflows](workflow_fig.png)
 
-### scPair Feature Attribution Pipeline
+The figure above and the schematic below summarize how the main workflows connect across data processing, multimodal integration, and downstream GRN analysis:
 
-Modular pipeline for scPair training, clustering, and cluster-specific feature attribution:
+```text
+scpair_train.nf  -->  scpair_cluster.nf
+      |                    |
+      v                    v
+  scPair embeddings   cluster labels
+          |
+          v
+integrate_scpair_multiome.nf
+          |
+          v
+  Seurat object with scPair embeddings
+          |
+          v
+      figr_pipeline.nf
+          |
+          v
+   FigR GRN results and plots
+```
+
+
+## Workflows
+
+### scPair training, clustering, and feature attribution (Python)
+
+The scPair workflows handle multimodal integration in Python and provide clustering and feature attribution on learned embeddings.
 
 ```bash
 # Full scPair pipeline: train -> embeddings -> clustering
@@ -93,24 +115,77 @@ nextflow run workflows/feature_attribution.nf \
   --attribution_method both --baseline both --output_ranked --top_n_genes 50
 ```
 
-See `../scpair_nextflow_pipeline_plan.md` for full documentation.
+See `../scpair_nextflow_pipeline_plan.md` for more details on the scPair pipeline.
 
-### System Requirements (scPair pipeline):
+
+### Integration of scPair embeddings into Seurat (R)
+
+The `workflows/integrate_scpair_multiome.nf` workflow runs the R helper `scripts/integrate_scPair_multiome.R` to:
+
+- Load a multiome Seurat object and scPair embeddings exported from the Python pipeline.
+- Add scPair embeddings as a Seurat `DimReduc`.
+- Perform graph construction, clustering, and UMAP.
+- Save updated Seurat objects, markers, and plots.
+
+Example:
+
+```bash
+nextflow run workflows/integrate_scpair_multiome.nf \
+  --seurat_obj_path /path/to/multiome_seurat.rds \
+  --scpair_csv /path/to/scpair_embeddings.csv \
+  --metadata_csv /path/to/metadata.csv \
+  --resolution 0.9 \
+  --prefix Sample1
+```
+
+
+### FigR preprocessing and GRN analysis (R)
+
+The `workflows/figr_pipeline.nf` workflow connects the Seurat object with scPair embeddings to FigR. It runs two R helpers in sequence:
+
+1. `scripts/prep_FigR_inputs.R` – builds FigR-ready inputs from multiome matrices and the Seurat object:
+   - ATAC `SummarizedExperiment` (`ATAC.se`)
+   - normalized RNA matrix (`RNAmat`)
+   - cell kNN index (`cellkNN`) derived from scPair embeddings
+2. `scripts/run_FigR_analysis.R` – performs:
+   - peak–gene correlation testing
+   - DORC identification and visualization
+   - DORC and RNA smoothing
+   - GRN inference and TF driver ranking
+
+Example:
+
+```bash
+nextflow run workflows/figr_pipeline.nf \
+  --atac_mtx /path/to/ATACmat.mtx \
+  --rna_mtx /path/to/RNAmat.mtx \
+  --metadata_csv /path/to/metadata.csv \
+  --genes_csv /path/to/genes.csv \
+  --peaks_csv /path/to/peaks.csv \
+  --seurat_scpair_rds /path/to/Sample1_scPair_final_res0.9.rds \
+  --prefix Sample1 \
+  --genome hg38
+```
+
+
+## System requirements
 
 - **GPU:** `scpair_train`, `scpair_inference`, and `feature_attribution` require at least 1 GPU (PyTorch/CUDA). `scpair_cluster` is CPU-only. For SLURM, `nextflow.config` requests `--gres=gpu:1` for GPU processes.
 - **Local runs:** Use `-profile local_activated`; ensure CUDA is available if running scPair steps locally.
+- The same conda environment is used for all Python (scPair) and R (Seurat + FigR) steps; see `environment.yml` and `nextflow.config` for resource labels and profiles.
 
-### Workflow Features:
+### Workflow features
 
-- **Unified Environment**: Both Python and R in the same conda environment
-- **Cluster Support**: Configured for SLURM, PBS, SGE, and local execution
-- **Resource Management**: Automatic CPU/memory allocation (GPU for scPair train/inference/attribution)
-- **Error Handling**: Retry logic and error reporting
-- **Resume Capability**: Continue failed workflows from where they stopped
+- **Unified environment**: Both Python and R in the same conda environment.
+- **Cluster support**: Configured for SLURM, PBS, SGE, and local execution.
+- **Resource management**: Automatic CPU/memory allocation (GPU for scPair train/inference/attribution).
+- **Error handling**: Retry logic and error reporting.
+- **Resume capability**: Continue failed workflows from where they stopped.
+
 
 ## Development
 
-### Adding new dependencies:
+### Adding new dependencies
 
 ```bash
 # Add to environment.yml, then update
@@ -125,10 +200,14 @@ Notes:
 - The conda env pins R to 4.2.2 to match the testing cluster.
 - If a conda solve fails due to strict R package pins, prefer installing that package via BiocManager after env creation.
 
-### Installing Bioconductor/CRAN R packages inside the env
-Some Bioconductor packages are not reliably available as conda recipes at the exact versions in your session. After activating the env, install them in R directly:
+When adding new R/Bioconductor dependencies for analysis steps, prefer updating `environment.yml` first. For packages not available on conda, install them inside the environment using BiocManager or remotes.
 
-### Verify versions:
+### Installing Bioconductor/CRAN R packages inside the env
+
+Some Bioconductor packages are not reliably available as conda recipes at specific versions. After activating the env, install them in R directly as needed.
+
+### Verify versions
+
 ```bash
 R --version
 python --version
