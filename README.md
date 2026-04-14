@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/1052473576.svg)](https://doi.org/10.5281/zenodo.19582767)
+
+
 # scMINA: single cell Multimodal Integration and Network Attribution
 
 scMINA is a Nextflow-based framework for single-cell multimodal (RNA + ATAC) analysis. It combines scPair deep generative modeling as an option in Python with Seurat and FigR workflows in R for gene regulatory network (GRN) inference, and explainable downstream analysis.
