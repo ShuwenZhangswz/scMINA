@@ -47,7 +47,123 @@ All dependencies are managed through conda and specified in `environment.yml`.
 
 - `environment.yml` – main conda environment with Python + R
 - `nextflow.config` – Nextflow configuration and resource labels
+## Reproducibility and random seeds
 
+scMINA exposes a shared `--seed` parameter for stochastic analysis steps. The
+default seed is `0`, but users should provide the seed explicitly when running
+an analysis intended for comparison, publication, or reproduction.
+
+The seed controls the following steps:
+
+| Workflow | Seeded operations |
+| --- | --- |
+| `scpair_pipeline.nf` / `scpair_train.nf` | Train/validation/test splitting and scPair model training |
+| `scpair_cluster.nf` | Scanpy neighbor graph construction and Leiden clustering |
+| `integrate_scpair_multiome.nf` | Seurat clustering and UMAP |
+| `figr_pipeline.nf` | FigR background sampling and other stochastic R operations |
+| `feature_attribution.nf` | NumPy and PyTorch operations used during feature attribution |
+
+### Using a seed
+
+Pass the seed as a Nextflow parameter:
+
+```bash
+nextflow run workflows/scpair_pipeline.nf \
+  --input_h5ad /path/to/paired.h5ad \
+  --seed 42 \
+  -profile local_activated
+```
+
+For clustering only:
+
+```bash
+nextflow run workflows/scpair_cluster.nf \
+  --embeddings_dir /path/to/embeddings \
+  --seed 42 \
+  -profile local_activated
+```
+
+For Seurat integration:
+
+```bash
+nextflow run workflows/integrate_scpair_multiome.nf \
+  --seurat_obj_path /path/to/multiome_seurat.rds \
+  --scpair_csv /path/to/scpair_embeddings.csv \
+  --metadata_csv /path/to/metadata.csv \
+  --resolution 0.9 \
+  --seed 42 \
+  --prefix Sample1 \
+  -profile local_activated
+```
+
+For FigR analysis:
+
+```bash
+nextflow run workflows/figr_pipeline.nf \
+  --atac_mtx /path/to/ATACmat.mtx \
+  --rna_mtx /path/to/RNAmat.mtx \
+  --metadata_csv /path/to/metadata.csv \
+  --genes_csv /path/to/genes.csv \
+  --peaks_csv /path/to/peaks.csv \
+  --seurat_scpair_rds /path/to/Sample1_scPair_final_res0.9.rds \
+  --genome hg38 \
+  --seed 42 \
+  -profile local_activated
+```
+
+Use the same seed for every workflow stage when reproducing a complete
+analysis:
+
+```bash
+SEED=42
+```
+
+Then pass it to each Nextflow command:
+
+```bash
+nextflow run workflows/scpair_pipeline.nf \
+  --input_h5ad /path/to/paired.h5ad \
+  --seed "${SEED}" \
+  -profile local_activated
+
+nextflow run workflows/integrate_scpair_multiome.nf \
+  --seurat_obj_path /path/to/multiome_seurat.rds \
+  --scpair_csv /path/to/scpair_embeddings.csv \
+  --metadata_csv /path/to/metadata.csv \
+  --seed "${SEED}" \
+  -profile local_activated
+
+nextflow run workflows/figr_pipeline.nf \
+  --atac_mtx /path/to/ATACmat.mtx \
+  --rna_mtx /path/to/RNAmat.mtx \
+  --metadata_csv /path/to/metadata.csv \
+  --genes_csv /path/to/genes.csv \
+  --peaks_csv /path/to/peaks.csv \
+  --seurat_scpair_rds /path/to/seurat_scpair.rds \
+  --seed "${SEED}" \
+  -profile local_activated
+```
+
+### Reproducibility limitations
+
+A fixed seed makes stochastic operations repeatable within the same software
+and hardware environment, but it does not guarantee byte-identical results
+across different environments.
+
+Results can still differ when changing:
+
+- Python, R, Scanpy, Seurat, FigR, scPair, or PyTorch versions
+- CPU versus GPU execution
+- CUDA, cuDNN, BLAS, or LAPACK versions
+- the number of parallel workers
+- operating system or hardware architecture
+- input file contents or cell ordering
+
+For published analyses, record the seed, the scMINA Git commit, input file
+checksums, and exact dependency versions. The R workflows save
+`sessionInfo()` and installed-package metadata in their output directories.
+Where available, use the committed Conda and R lock files to recreate the
+analysis environment.
 
 ## Nextflow integration and overall workflow
 
