@@ -47,6 +47,67 @@ All dependencies are managed through conda and specified in `environment.yml`.
 
 - `environment.yml` – main conda environment with Python + R
 - `nextflow.config` – Nextflow configuration and resource labels
+
+### Extra figure visualizations (R)
+
+The `workflows/extra_visualizations.nf` workflow runs `scripts/run_extra_visualizations.R` to generate publication-oriented supplementary figures from saved scMINA results:
+
+- ATAC coverage plots for one or more genes
+- a DEG volcano plot and significant-DEG table
+- a GO enrichment heatmap across cell types
+- a FigR TF–DORC network
+- a FigR heatmap for each selected gene
+
+The workflow also saves its parameters and R `sessionInfo()` alongside the figures. Network layout is initialized with `--seed`; use the same seed and software environment to reproduce a figure.
+
+#### Required inputs
+
+| Parameter | Description |
+| --- | --- |
+| `--seurat_obj` | Seurat multiome object containing the assay required by `Signac::CoveragePlot` |
+| `--deg_rds` | RDS containing differential-expression results |
+| `--enrichment` | GO enrichment results as CSV or RDS |
+| `--figr_rds` | FigR GRN result table saved as RDS |
+| `--genes` | One or more comma-separated gene/DORC names |
+
+The DEG table must contain `p_val_adj` and `avg_log2FC`. The enrichment table must contain `Term`, `celltype`, `Odds.Ratio`, and `Adjusted.P.value`; `Combined.Score` and `direction` are optional. The FigR table must contain `Motif`, `DORC`, `Score`, and `Corr`.
+
+#### Example
+
+```bash
+nextflow run workflows/extra_visualizations.nf \
+  --seurat_obj /path/to/multiome_seurat.rds \
+  --deg_rds /path/to/DEGs.rds \
+  --enrichment /path/to/GO_enrichment.csv \
+  --figr_rds /path/to/Sample1_FigR_GRN.rds \
+  --genes "GENE1,GENE2" \
+  --prefix Sample1 \
+  --seed 42 \
+  -profile local_activated
+```
+
+By default, all five plot types are generated. Select a subset with a comma-separated list:
+
+```bash
+--plots "volcano,enrichment,network"
+```
+
+Available plot names are `coverage`, `volcano`, `enrichment`, `network`, and `figr_heatmap`.
+
+#### Visualization parameters
+
+| Parameter | Default | Description |
+| --- | ---: | --- |
+| `--seed` | `0` | Seed used for reproducible network layout |
+| `--padj_cutoff` | `0.05` | Adjusted P-value cutoff for significant DEGs and the volcano reference line |
+| `--log2fc_cutoff` | `1.0` | Absolute log2 fold-change cutoff for significant DEGs |
+| `--top_terms_per_celltype` | `2` | Number of top enrichment terms selected per cell type |
+| `--enrichment_direction` | `all` | Direction to retain when the enrichment table contains a `direction` column |
+| `--network_score_cutoff` | `1.5` | Minimum absolute FigR score for network edges |
+| `--heatmap_score_cutoff` | `0.8` | FigR heatmap score cutoff |
+
+Outputs are published under `results/extra_visualizations` by default. They include PDF figures, the significant-DEG CSV, `<prefix>_visualization_parameters.csv`, and `<prefix>_sessionInfo.txt`.
+
 ## Reproducibility and random seeds
 
 scMINA exposes a shared `--seed` parameter for stochastic analysis steps. The
@@ -143,27 +204,6 @@ nextflow run workflows/figr_pipeline.nf \
   --seed "${SEED}" \
   -profile local_activated
 ```
-
-### Reproducibility limitations
-
-A fixed seed makes stochastic operations repeatable within the same software
-and hardware environment, but it does not guarantee byte-identical results
-across different environments.
-
-Results can still differ when changing:
-
-- Python, R, Scanpy, Seurat, FigR, scPair, or PyTorch versions
-- CPU versus GPU execution
-- CUDA, cuDNN, BLAS, or LAPACK versions
-- the number of parallel workers
-- operating system or hardware architecture
-- input file contents or cell ordering
-
-For published analyses, record the seed, the scMINA Git commit, input file
-checksums, and exact dependency versions. The R workflows save
-`sessionInfo()` and installed-package metadata in their output directories.
-Where available, use the committed Conda and R lock files to recreate the
-analysis environment.
 
 ## Nextflow integration and overall workflow
 
