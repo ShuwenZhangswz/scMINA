@@ -15,6 +15,7 @@ import numpy as np
 def parse_args():
     p = argparse.ArgumentParser(description="Cluster on embeddings")
     p.add_argument("--embeddings_dir", required=True, help="Dir with embeddings_Gene_Expression_*.csv, embeddings_Peaks_*.csv")
+    p.add_argument("--seed",type=int,default=0,help="Random seed for neighbor graph construction and Leiden clustering")
     p.add_argument("--output_dir", required=True, help="Output directory")
     p.add_argument("--embedding_mode", default="all", choices=["all", "rna_only", "peaks_only"],
                    help="all: concat RNA+Peaks; rna_only: Gene Expression only; peaks_only: Peaks only")
@@ -96,10 +97,10 @@ def main():
     cell_ids = pd.Index(all_cells)
 
     adata = sc.AnnData(X=concat_emb, obs=pd.DataFrame(index=cell_ids))
-    sc.pp.neighbors(adata, use_rep="X", n_neighbors=15)
+    sc.pp.neighbors(adata, use_rep="X", n_neighbors=15,random_state=args.seed)
 
     for res in resolutions:
-        sc.tl.leiden(adata, resolution=res, key_added=f"leiden_res{res}")
+        sc.tl.leiden(adata, resolution=res, key_added=f"leiden_res{res}",random_state=args.seed)
 
     for res in resolutions:
         col = f"leiden_res{res}"
@@ -113,6 +114,7 @@ def main():
     cluster_params = {
         "embedding_mode": mode,
         "resolutions": resolutions,
+        "seed": args.seed
     }
     with open(out_dir / "clustering_params.json", "w") as f:
         json.dump(cluster_params, f, indent=2)
