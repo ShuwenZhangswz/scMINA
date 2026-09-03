@@ -22,6 +22,8 @@
 #' @param dorcK Proportion for DORC selection in GRN (default = 2).
 #' @param prefix Output filename prefix (default = "FigR").
 #' @param outdir Output directory (default = "./FigR_results").
+#' @param seed Random seed used by FigR and R, including parallel RNG streams.
+#' Default: 0.
 #'
 #' @return A list containing cisCorr, cisCorr.filt, dorcGenes, dorcMat.s, RNAmat.s, and figR.d.
 #' @export
@@ -47,6 +49,7 @@ run_FigR_analysis <- function(
     dorc_cutoff = 5,
     dorc_labelTop = 20,
     dorcK = 2,
+    seed = 0,
     prefix = "FigR",
     outdir = "./FigR_results"
 ){
@@ -57,6 +60,11 @@ run_FigR_analysis <- function(
     library(BuenColors)
     library(ggplot2)
   })
+
+  RNGkind("L'Ecuyer-CMRG")
+  set.seed(seed)
+
+  message("Random seed: ", seed)
 
   if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
@@ -213,6 +221,7 @@ if (sys.nframe() == 0) {
   dorc_cutoff   <- if (!is.null(arg_list$dorc_cutoff)) as.numeric(arg_list$dorc_cutoff) else 5
   dorc_labelTop <- if (!is.null(arg_list$dorc_labelTop)) as.integer(arg_list$dorc_labelTop) else 20
   dorcK         <- if (!is.null(arg_list$dorcK)) as.numeric(arg_list$dorcK) else 2
+  seed          <- if (!is.null(arg_list$seed)) as.integer(arg_list$seed) else 0L
   prefix        <- if (!is.null(arg_list$prefix)) arg_list$prefix else "FigR"
   outdir        <- if (!is.null(arg_list$outdir)) arg_list$outdir else "./FigR_results"
 
@@ -227,6 +236,7 @@ if (sys.nframe() == 0) {
     dorc_cutoff   = dorc_cutoff,
     dorc_labelTop = dorc_labelTop,
     dorcK         = dorcK,
+    seed          = seed,
     prefix        = prefix,
     outdir        = outdir
   )
