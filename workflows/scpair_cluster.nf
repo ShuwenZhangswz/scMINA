@@ -6,6 +6,7 @@ params.output_dir = "${projectDir}/results/clustering"
 params.resolutions = "0.5,0.9,1.2,1.5"
 params.embedding_mode = "all"
 params.save_concat = false
+params.seed = 0
 
 process scpair_cluster {
     label 'high_memory'
@@ -26,6 +27,7 @@ process scpair_cluster {
         --output_dir output \\
         --resolutions ${params.resolutions} \\
         --embedding_mode ${params.embedding_mode} \\
+        --seed ${params.seed} \\
         ${save_flag}
     """
 }
