@@ -24,6 +24,13 @@ dependencies:
   - bioconductor-figr
   - r-ggrastr
   - r-buencolors
+  # Additional visualization packages
+  - r-signac
+  - r-ggally
+  - r-network
+  - r-scales
+  - r-circlize
+  - bioconductor-complexheatmap
   # - r-signac=1.15.0  # Install via R if needed
 
   # Python scientific stack
