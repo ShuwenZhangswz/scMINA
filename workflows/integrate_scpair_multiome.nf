@@ -23,6 +23,7 @@ params.metadata_csv    = null
 
 params.dims_use        = null          // e.g. "1:60" (handled in R)
 params.resolution      = 0.9
+params.seed            = 0
 params.prefix          = "Sample"
 params.outdir          = "${projectDir}/results/integrate_scpair_multiome"
 params.split_by        = "donor_id"    // set to NULL in R to disable
@@ -58,6 +59,7 @@ process integrate_scpair_multiome {
         --scpair_csv "${scpair_csv}" \\
         --metadata_csv "${metadata_csv}" \\
         --resolution ${params.resolution} \\
+        --seed ${params.seed} \\
         --prefix "${params.prefix}" \\
         --outdir "${params.outdir}" \\
         ${extra_str}
