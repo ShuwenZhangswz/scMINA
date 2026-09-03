@@ -31,6 +31,7 @@ params.prep_outdir = "${projectDir}/results/FigR_preprocessing"
 
 // Analysis options
 params.genome           = "hg38"
+params.seed             = 0
 params.nCores_corr      = 64
 params.nCores_smooth    = 24
 params.nCores_grn       = 8
@@ -102,6 +103,7 @@ process run_figr_analysis {
         --rna_mat_rds "${rna_mat_rds}" \\
         --cellknn_rds "${cellknn_rds}" \\
         --genome "${params.genome}" \\
+        --seed ${params.seed} \\
         --nCores_corr ${params.nCores_corr} \\
         --nCores_smooth ${params.nCores_smooth} \\
         --nCores_grn ${params.nCores_grn} \\
