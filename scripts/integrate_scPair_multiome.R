@@ -14,6 +14,7 @@
 #' @param split_by Metadata column name for sample-level scaling or UMAP splitting
 #'                 (default: "donor_id"; set to NULL to disable split scaling).
 #' @param generate_plots Whether to save UMAP/heatmap plots (default: TRUE).
+#' @param seed Random seed for Seurat clustering and UMAP. Default: 0.
 #'
 #' @return Processed Seurat object with scPair embedding and clustering.
 #' @export
@@ -35,6 +36,7 @@ integrate_scPair_multiome <- function(
     metadata_csv,
     dims_use = 1:60,
     resolution = 0.9,
+    seed = 0,
     prefix = "Sample",
     outdir = "./scpair_results",
     split_by = "donor_id",
@@ -45,7 +47,7 @@ integrate_scPair_multiome <- function(
     library(dplyr)
     library(ggplot2)
   })
-
+    
   #------------------------------------------------------------
   # 0. Prepare output directory
   #------------------------------------------------------------
@@ -55,6 +57,8 @@ integrate_scPair_multiome <- function(
   #------------------------------------------------------------
   # 1. Load Seurat object + scPair embeddings
   #------------------------------------------------------------
+  set.seed(seed)
+  message("Random seed: ", seed)
   message("Loading Seurat object and scPair embeddings...")
   obj <- readRDS(seurat_obj_path)
 
@@ -88,7 +92,7 @@ integrate_scPair_multiome <- function(
   #------------------------------------------------------------
   message("Running FindNeighbors + FindClusters using scPair...")
   obj <- FindNeighbors(obj, reduction = "scPair", dims = dims_use)
-  obj <- FindClusters(obj, reduction = "scPair", dims = dims_use, resolution = resolution)
+  obj <- FindClusters(obj, reduction = "scPair", dims = dims_use, resolution = resolution,random.seed = seed)
 
   #------------------------------------------------------------
   # 4. Run UMAP
@@ -99,7 +103,8 @@ integrate_scPair_multiome <- function(
     obj,
     reduction = "scPair",
     dims = dims_use,
-    reduction.name = umap_name
+    reduction.name = umap_name,
+    seed.use = seed
   )
 
   saveRDS(obj, file.path(outdir, paste0(prefix, "_scPair_raw.rds")))
@@ -257,6 +262,7 @@ if (sys.nframe() == 0) {
   resolution <- if (!is.null(arg_list$resolution)) as.numeric(arg_list$resolution) else 0.9
   prefix     <- if (!is.null(arg_list$prefix)) arg_list$prefix else "Sample"
   outdir     <- if (!is.null(arg_list$outdir)) arg_list$outdir else "./scpair_results"
+  seed <- if (!is.null(arg_list$seed)) {as.integer(arg_list$seed)} else {0L}
   split_by   <- if (!is.null(arg_list$split_by) && arg_list$split_by != "NULL") arg_list$split_by else NULL
 
   generate_plots <- TRUE
@@ -270,6 +276,7 @@ if (sys.nframe() == 0) {
     metadata_csv    = arg_list$metadata_csv,
     dims_use        = dims_use,
     resolution      = resolution,
+    seed             = seed,
     prefix          = prefix,
     outdir          = outdir,
     split_by        = split_by,
